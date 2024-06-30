@@ -1,0 +1,192 @@
+#!/bin/bash
+pacman -Syy
+ln -sf /usr/share/zoneinfo/America/Puerto_Rico /etc/localtime
+hwclock --systohc
+# The hwclock --systohc command is used to synchronize the system time with the hardware clock (also known as the real-time clock or RTC)
+# in a Linux system.
+sed -i '171s/.//' /etc/locale.gen
+#Removes the first character in line 171 on the /etc/locale.gen file.
+locale-gen
+echo "LANG=en_US.UTF-8" >> /etc/locale.conf
+
+#Configure device hostname
+echo "What hostname would you give your system?"
+read -r host
+echo "$host" > /etc/hostname
+echo "127.0.0.1 localhost" >> /etc/hosts
+echo "::1       localhost" >> /etc/hosts
+echo "127.0.1.1 ${host}.localdomain ${host}" >> /etc/hosts
+
+password=""
+confirm_password="nomatch"
+# Prompt the user to input a new password
+while [[ "$password" != "$confirm_password" ]]; do
+    # Prompt for password
+	echo "" 
+    read -s -p "Enter password for root account: " password
+    echo
+    # Prompt for password confirmation
+    read -s -p "Confirm password: " confirm_password
+    echo
+
+    if [[ "$password" != "$confirm_password" ]]; then
+        echo "Passwords do not match. Please try again."
+    fi
+done
+echo "root:$password" | chpasswd
+echo "Passwords match. Password set successfully."
+
+#Removes the Colors, parallel downloads and multilib comment characters from the /etc/pacman.conf configuration file.
+echo
+echo "Configuring /etc/pacman.conf for user use."
+
+sed -i '33s/.//' /etc/pacman.conf
+sed -i '37s/.//' /etc/pacman.conf
+sed -i '90s/.//' /etc/pacman.conf
+sed -i '91s/.//' /etc/pacman.conf
+
+
+#A bootloader will need to be installed as well (at the time of creation my intent was to add systemd-boot.
+pacman -S efibootmgr networkmanager network-manager-applet dialog wpa_supplicant neofetch mtools dosfstools base-devel linux-headers avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils cups alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack bash-completion openssh rsync reflector acpi acpi_call tlp bridge-utils dnsmasq iptables-nft ipset firewalld sof-firmware nss-mdns acpid os-prober ntfs-3g
+# Commented out packages: hplip virt-manager qemu qemu-arch-extra edk2-ovmf vde2 openbsd-netcat terminus-font flatpak grub
+
+
+#Decision determining what graphics drivers should be installed
+echo
+echo "Please select the package you want to install:"
+echo "1. Nvidia"
+echo "2. Intel"
+echo "3. VMware"
+
+valid_install=false
+while [ "$valid_install" = false ]; do
+    echo -n "Enter your choice (1-3): "
+    read choice
+
+    case $choice in
+        1)
+			echo
+            echo "Installing Nvidia package..."
+			pacman -S --noconfirm nvidia nvidia-utils nvidia-settings nvidia-dkms nvtop bbswitch optimus-manager optimus-manager-qt
+            valid_install=true
+            ;;
+        2)
+			echo
+            echo "Installing Intel package..."
+            # Command to install Intel package
+			pacman -S --noconfirm xf86-video-intel
+            valid_install=true
+            ;;
+        3)	
+			echo
+            echo "Installing VMware package..."
+            # Command to install VMware package
+			pacman -S --noconfirm xf86-video-vmware xf86-input-vmmouse virtualbox-guest-utils
+            valid_install=true
+            ;;
+        *)	
+			echo
+            echo "Invalid choice. Please try again."
+            ;;
+    esac
+done
+echo
+echo "Package installation completed."
+echo
+
+
+valid_boot=false
+while [ $valid_boot = false ]; do
+	echo "Please select the boot loader to install: "
+	echo "1. GRUB"
+	echo "2. Systemd-boot"
+	echo -n "Enter your choice (1-3): "
+	read choice_boot
+	case $choice_boot in
+		1)
+			echo
+			echo "Installing grub..."
+			pacman -S --noconfirm grub
+			grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=GRUB #change the directory to /boot/efi is you mounted the EFI partition at /boot/efi
+			grub-mkconfig -o /boot/grub/grub.cfg
+			valid_boot=true
+			;;
+		2)
+			echo
+			echo "Installing systemd-boot..."
+			echo
+			bootctl install
+			echo default linux >> /boot/loader/loader.conf
+			echo title Arch Linux >> /boot/loader/entries/linux.conf
+			echo linux /vmlinuz-linux >> /boot/loader/entries/linux.conf
+			echo initrd /initramfs-linux.img >> /boot/loader/entries/linux.conf
+			#echo options quiet >> /boot/loader/entries/linux.conf
+			
+			choice_root=false
+			while [ "$choice_root" = false ]; do
+				  read -p "Enter the root partition (e.g., /dev/sda1):" root_partition
+
+                                if [ -b "$root_partition" ]; then
+                                        uuid=$(blkid "$root_partition" | grep -m 1 -o 'UUID="[^"]*"' | head -1 | awk -F'"' '{print "root=UUID="$2}')
+                                        echo "options $uuid rw" >> /boot/loader/entries/linux.conf
+
+                                        choice_root=true
+                                else
+                                        echo "Not a proper root partition"
+                                fi		
+			done	
+			valid_boot=true
+			;;
+		*)
+			echo
+			echo "Please pick a valid choice."
+			;;
+	esac
+done	
+
+echo "Initializing services.."
+echo
+systemctl enable NetworkManager
+systemctl enable bluetooth
+systemctl enable cups.service
+systemctl enable sshd
+systemctl enable avahi-daemon
+systemctl enable tlp
+systemctl enable reflector.timer
+systemctl enable fstrim.timer
+systemctl enable firewalld
+systemctl enable acpid
+
+# Prompt the user to input a new password
+echo
+read -p "Enter a new user: " user
+
+passwordUser=""
+confirm_passwordUser="nomatch"
+# Prompt the user to input a new password
+while [[ "$passwordUser" != "$confirm_passwordUser" ]]; do
+    # Prompt for password
+	echo "" 
+    read -s -p "Enter password for '$user': " passwordUser
+    echo
+    # Prompt for password confirmation
+    read -s -p "Confirm password: " confirm_passwordUser
+    echo
+
+    if [[ "$passwordUser" != "$confirm_passwordUser" ]]; then
+        echo "Passwords do not match. Please try again."
+    fi
+done
+echo "$user:$password" | chpasswd
+echo "Passwords match. Password set successfully."
+
+#read -s -p "Enter the password for the new user: " passwd
+useradd -m -g wheel "$user"
+echo
+echo "User '$user' has been created with the provided password"
+
+
+echo "$user ALL=(ALL) ALL" >> /etc/sudoers.d/"$user"
+echo
+printf "\e[1;32mDone! Type exit, umount -a and reboot.\e[0m"
+echo
