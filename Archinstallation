@@ -1,5 +1,5 @@
 #!/bin/bash
-pacman -Syy
+pacman -Syyu
 ln -sf /usr/share/zoneinfo/America/Puerto_Rico /etc/localtime
 hwclock --systohc
 # The hwclock --systohc command is used to synchronize the system time with the hardware clock (also known as the real-time clock or RTC)
