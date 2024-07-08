@@ -48,7 +48,7 @@ sed -i '91s/.//' /etc/pacman.conf
 pacman -Syy
 
 #A bootloader will need to be installed as well (at the time of creation my intent was to add systemd-boot.
-pacman -S efibootmgr networkmanager network-manager-applet dialog wpa_supplicant neofetch mtools dosfstools base-devel linux-headers avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils cups alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack bash-completion openssh rsync reflector acpi acpi_call tlp bridge-utils dnsmasq iptables-nft ipset firewalld sof-firmware nss-mdns acpid os-prober ntfs-3g
+pacman -S efibootmgr networkmanager network-manager-applet dialog wpa_supplicant base-devel linux-headers avahi xdg-user-dirs xdg-utils gvfs gvfs-smb nfs-utils inetutils dnsutils bluez bluez-utils blueman cups alsa-utils pipewire pipewire-alsa pipewire-pulse pipewire-jack bash-completion openssh reflector acpi acpi_call tlp bridge-utils dnsmasq iptables-nft ipset firewalld sof-firmware nss-mdns acpid os-prober ntfs-3g
 # Commented out packages: hplip virt-manager qemu qemu-arch-extra edk2-ovmf vde2 openbsd-netcat terminus-font flatpak grub
 
 
