@@ -162,6 +162,8 @@ systemctl enable acpid
 echo
 read -p "Enter a new user: " user
 
+useradd -m -g wheel "$user"
+
 passwordUser=""
 confirm_passwordUser="nomatch"
 # Prompt the user to input a new password
@@ -182,7 +184,7 @@ echo "$user:$password" | chpasswd
 echo "Passwords match. Password set successfully."
 
 #read -s -p "Enter the password for the new user: " passwd
-useradd -m -g wheel "$user"
+
 echo
 echo "User '$user' has been created with the provided password"
 
