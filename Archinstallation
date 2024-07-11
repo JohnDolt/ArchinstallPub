@@ -153,8 +153,6 @@ systemctl enable cups.service
 systemctl enable sshd
 systemctl enable avahi-daemon
 systemctl enable tlp
-systemctl enable reflector.timer
-systemctl enable fstrim.timer
 systemctl enable firewalld
 systemctl enable acpid
 
@@ -180,10 +178,8 @@ while [[ "$passwordUser" != "$confirm_passwordUser" ]]; do
         echo "Passwords do not match. Please try again."
     fi
 done
-echo "$user:$password" | chpasswd
+echo "$user:$passwordUser" | chpasswd
 echo "Passwords match. Password set successfully."
-
-#read -s -p "Enter the password for the new user: " passwd
 
 echo
 echo "User '$user' has been created with the provided password"
